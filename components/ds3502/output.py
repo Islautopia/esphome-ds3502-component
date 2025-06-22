@@ -1,20 +1,20 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
-from esphome.components import output, i2c
+from esphome.components import output
 from esphome.const import CONF_ID
+from . import DS3502Hub # Importamos el Hub desde __init__.py
 
-# Este es el código que define nuestra plataforma "ds3502" para el componente "output"
-ds3502_ns = cg.esphome_ns.namespace("ds3502")
-DS3502Output = ds3502_ns.class_("DS3502Output", output.FloatOutput, cg.Component, i2c.I2CDevice)
+CONF_DS3502_ID = "ds3502_id"
 
-CONFIG_SCHEMA = output.FLOAT_OUTPUT_SCHEMA.extend(
-    {
-        cv.GenerateID(CONF_ID): cv.declare_id(DS3502Output),
-    }
-).extend(i2c.i2c_device_schema(0x28)).extend(cv.COMPONENT_SCHEMA)
+DS3502Output = cg.esphome_ns.namespace("ds3502").class_("DS3502Output", output.FloatOutput, cg.Component)
+
+CONFIG_SCHEMA = output.FLOAT_OUTPUT_SCHEMA.extend({
+    cv.GenerateID(): cv.declare_id(DS3502Output),
+    cv.Required(CONF_DS3502_ID): cv.use_id(DS3502Hub),
+}).extend(cv.COMPONENT_SCHEMA)
 
 async def to_code(config):
-    var = cg.new_Pvariable(config[CONF_ID])
+    hub = await cg.get_variable(config[CONF_DS3502_ID])
+    var = cg.new_Pvariable(config[CONF_ID], hub)
     await cg.register_component(var, config)
     await output.register_output(var, config)
-    await i2c.register_i2c_device(var, config)
